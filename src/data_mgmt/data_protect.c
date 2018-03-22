@@ -432,8 +432,8 @@ main( int    a_iArgc,
 
 	char *pszPin = NULL;
 
-	CK_RV              rv;
-	CK_SESSION_HANDLE  hSession;
+	CK_RV              rv = 0;
+	CK_SESSION_HANDLE  hSession = 0;
 	CK_OBJECT_HANDLE   hObject;
 	CK_MECHANISM       tMechanism = { CKM_AES_ECB, NULL, 0 };
 

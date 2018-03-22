@@ -165,7 +165,7 @@ static BOOL confirmLifeLock(TSS_HCONTEXT hContext, TSS_HTPM hTpm)
 
 	TSS_BOOL bCmd, bHwd;
 	BOOL bRc;
-	TSS_HPOLICY hTpmPolicy;
+	TSS_HPOLICY hTpmPolicy = 0;
 	char *pwd = NULL;
 	int pswd_len;
 	char rsp[5];

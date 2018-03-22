@@ -220,7 +220,7 @@ int main(int argc, char **argv)
 		close(fd);
 		fd = -1;
 	} else if (fillvalue >= 0) {
-		if (length < 0) {
+		if (length == 0) {
 			logError(_("Requiring size parameter.\n"));
 			return -1;
 		}

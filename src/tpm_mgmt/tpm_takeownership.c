@@ -67,7 +67,7 @@ int main(int argc, char **argv)
 	char *szSrkPasswd = NULL;
 	int tpm_len, srk_len;
 	TSS_HTPM hTpm;
-	TSS_HKEY hSrk;
+	TSS_HKEY hSrk = 0;
 	TSS_FLAG fSrkAttrs;
 	TSS_HPOLICY hTpmPolicy, hSrkPolicy;
 	int iRc = -1;

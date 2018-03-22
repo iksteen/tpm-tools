@@ -26,7 +26,7 @@
 
 #include <opencryptoki/pkcs11.h>
 
-#define TPM_OPENCRYPTOKI_SO	"libopencryptoki.so"
+#define TPM_OPENCRYPTOKI_SO	"libopencryptoki.so.0"
 #define TPM_TOKEN_LABEL		"IBM PKCS#11 TPM Token"
 #define TPM_FIND_MAX		10
 
