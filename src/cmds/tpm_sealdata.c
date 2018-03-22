@@ -33,9 +33,9 @@ static void help(const char *aCmd)
 	logCmdOption("-o, --outfile FILE",
 		     _
 		     ("Filename to write sealed key to.  Default is STDOUT."));
-	logCmdOption("-p, --pcr NUMBER",
+	logCmdOption("-p, --pcr NUMBER[=HASH]",
 		     _
-		     ("PCR to seal data to.  Default is none.  This option can be specified multiple times to choose more than one PCR."));
+		     ("PCR to seal data to.  Default is none.  This option can be specified multiple times to choose more than one PCR. You can optionally specify a pre-computed hash to verify the PCR against when unsealing."));
 	logCmdOption("-z, --well-known", _("Use TSS_WELL_KNOWN_SECRET as the SRK secret."));
 	logCmdOption("-u, --unicode", _("Use TSS UNICODE encoding for the SRK password to comply with applications using TSS popup boxes"));
 
@@ -46,6 +46,8 @@ static TSS_HPCRS hPcrs = NULL_HPCRS;
 static TSS_HTPM hTpm;
 static UINT32 selectedPcrs[24];
 static UINT32 selectedPcrsLen = 0;
+static BYTE *pcrValues[24];
+static long pcrValueSize[24];
 static BOOL passUnicode = FALSE;
 static BOOL isWellKnown = FALSE;
 TSS_HCONTEXT hContext = 0;
@@ -53,6 +55,8 @@ TSS_HCONTEXT hContext = 0;
 static int parse(const int aOpt, const char *aArg)
 {
 	int rc = -1;
+	UINT32 n;
+	char *pos;
 
 	switch (aOpt) {
 	case 'i':
@@ -69,7 +73,17 @@ static int parse(const int aOpt, const char *aArg)
 		break;
 	case 'p':
 		if (aArg) {
-			selectedPcrs[selectedPcrsLen++] = atoi(aArg);
+			n = selectedPcrsLen++;
+			selectedPcrs[n] = atoi(aArg);
+
+			pos = strchr(aArg, '=');
+			if (pos == NULL)
+				pcrValues[n] = NULL;
+			else {
+				pcrValues[n] = OPENSSL_hexstr2buf(pos + 1, &pcrValueSize[n]);
+				if (! pcrValues[n])
+					goto out;
+			}
 			rc = 0;
 		}
 		break;
@@ -84,6 +98,7 @@ static int parse(const int aOpt, const char *aArg)
 	default:
 		break;
 	}
+out:
 	return rc;
 
 }
@@ -177,8 +192,13 @@ int main(int argc, char **argv)
 			goto out_close;
 
 		for (i = 0; i < selectedPcrsLen; i++) {
-			if (tpmPcrRead(hTpm, selectedPcrs[i], &pcrSize, &pcrValue) != TSS_SUCCESS)
-				goto out_close;
+			if (pcrValues[i] == NULL) {
+				if (tpmPcrRead(hTpm, selectedPcrs[i], &pcrSize, &pcrValue) != TSS_SUCCESS)
+					goto out_close;
+			} else {
+				pcrSize = pcrValueSize[i];
+				pcrValue = pcrValues[i];
+			}
 
 			if (pcrcompositeSetPcrValue(hPcrs, selectedPcrs[i], pcrSize, pcrValue)
 					!= TSS_SUCCESS)
@@ -369,6 +389,8 @@ out_close:
 	contextClose(hContext);
 
 out:
+	for (i = 0; i < selectedPcrsLen; i++)
+		OPENSSL_free(pcrValues[i]);
 	if (bin)
 		BIO_free(bin);
 	if (bdata)
